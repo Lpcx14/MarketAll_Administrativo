@@ -60,15 +60,15 @@ Funcionalidades
  Cadastro e gerenciamento de produtos  
  Controle de categorias  
  Gestão de pedidos  
-Administração de usuários  
-Visualização de relatórios  
-Configurações gerais do sistema  
+ Administração de usuários  
+ Visualização de relatórios  
+ Configurações gerais do sistema  
 
 Tecnologias Utilizadas
 
 - JavaScript / TypeScript  
-- React / React Native *(se aplicável)*  
-- Node.js *(se houver backend integrado)*  
+- React / React Native **  
+- Node.js **  
 - API REST  
 - Git & GitHub  
 
