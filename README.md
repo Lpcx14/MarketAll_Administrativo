@@ -1,4 +1,4 @@
-# Welcome to your Expo app 👋
+# Welcome to your Expo app 
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
@@ -48,3 +48,42 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+
+
+ MarketAll – Módulo Administrativo
+
+Este repositório contém o **módulo administrativo** do sistema **MarketAll**, responsável pelo gerenciamento interno da aplicação.
+
+Funcionalidades
+
+ Cadastro e gerenciamento de produtos  
+ Controle de categorias  
+ Gestão de pedidos  
+Administração de usuários  
+Visualização de relatórios  
+Configurações gerais do sistema  
+
+Tecnologias Utilizadas
+
+- JavaScript / TypeScript  
+- React / React Native *(se aplicável)*  
+- Node.js *(se houver backend integrado)*  
+- API REST  
+- Git & GitHub  
+
+Estrutura do Projeto
+
+
+MarketAll_Administrativo/
+│
+├── src/
+│ ├── components/
+│ ├── screens/
+│ ├── services/
+│ ├── assets/
+│ └── utils/
+│
+├── package.json
+├── README.md
+└── .gitignore
