@@ -1,0 +1,6 @@
+ Linked to leopcxs-projects/teste-react-tcc (created .vercel and added it to .gitignore)
+🔍  Inspect: https://vercel.com/leopcxs-projects/teste-react-tcc/GgQdLfuqoAkhHuh6F6F8Wwx7qkVn [11s]
+✅  Production: https://teste-react-gq934orw1-leopcxs-projects.vercel.app [3m]
+🔗  Aliased: https://teste-react-tcc.vercel.app [3m]
+📝  Deployed to production. Run `vercel --prod` to overwrite later (https://vercel.link/2F).
+💡  To change the domain or build command, go to https://vercel.com/leopcxs-projects/teste-react-tcc/settings

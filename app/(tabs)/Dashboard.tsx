@@ -1,3 +1,6 @@
+import { FontAwesome5 } from "@expo/vector-icons";
+import { onAuthStateChanged } from "firebase/auth";
+import { collection, getDocs } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
   FlatList,
@@ -10,14 +13,18 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
-import { onAuthStateChanged, signOut } from "firebase/auth";
-import { collection, getDocs } from "firebase/firestore";
+import EmailMask from "./EmailMask";
 import { auth, db } from "./firebase";
+import Produto from "./Produtos";
 
-import { FontAwesome5 } from "@expo/vector-icons";
+type DashboardProps = {
+  usuario: {
+    email: string;
+  };
+  onLogout: () => Promise<void>;
+};
 
-export default function Dashboard() {
+export default function Dashboard({ usuario, onLogout }: DashboardProps) {
   const [produtos, setProdutos] = useState<any[]>([]);
   const [usuarios, setUsuarios] = useState<any[]>([]);
   const [view, setView] = useState<"produtos" | "usuarios">("produtos");
@@ -25,6 +32,7 @@ export default function Dashboard() {
   const [usuarioLogado, setUsuarioLogado] = useState({ email: "" });
   const [focused, setFocused] = useState(false);
   const [produtoSelecionado, setProdutoSelecionado] = useState("");
+  const [produtoAtual, setProdutoAtual] = useState<any | null>(null);
 
   // Lista lateral fixa
   const listaProdutos = [
@@ -101,14 +109,18 @@ export default function Dashboard() {
 
   // Usuário logado
   useEffect(() => {
+    setSearch("");
+
     const unsub = onAuthStateChanged(auth, (user) => {
       if (user?.email) setUsuarioLogado({ email: user.email });
     });
     return unsub;
-  }, []);
+  }, [view]);
 
   // Carregar Firestore
   useEffect(() => {
+    setSearch("");
+
     const loadData = async () => {
       const prodSnap = await getDocs(collection(db, "product"));
       setProdutos(prodSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
@@ -117,11 +129,7 @@ export default function Dashboard() {
       setUsuarios(userSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
     };
     loadData();
-  }, []);
-
-  const logout = async () => {
-    await signOut(auth);
-  };
+  }, [view]);
 
   // Filtrar produtos pelo search e pelo item lateral selecionado
   const produtosLaterais = listaProdutos.filter((p) =>
@@ -139,16 +147,33 @@ export default function Dashboard() {
     setSearch(produto);
   };
 
+  // Filtrar usuários pelo search (nome, id ou email)
+  const filteredUsuarios = usuarios.filter((u) => {
+    const searchLower = search.toLowerCase();
+
+    return (
+      u.nome?.toLowerCase().includes(searchLower) ||
+      u.id?.toLowerCase().includes(searchLower) ||
+      u.email?.toLowerCase().includes(searchLower)
+    );
+  });
+
+  if (produtoAtual) {
+    return (
+      <Produto produto={produtoAtual} onVoltar={() => setProdutoAtual(null)} />
+    );
+  }
+
   return (
     <ScrollView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>Administrador</Text>
-          <Text style={styles.email}>{usuarioLogado.email}</Text>
+          <EmailMask email={usuarioLogado.email} />
         </View>
 
-        <TouchableOpacity onPress={logout} style={styles.logout}>
+        <TouchableOpacity onPress={onLogout} style={styles.logout}>
           <Text style={styles.logoutText}>Sair</Text>
         </TouchableOpacity>
       </View>
@@ -230,17 +255,20 @@ export default function Dashboard() {
             renderItem={({ item: p }) => {
               const base64Image = p.image ? p.image.replace(/\s/g, "") : null;
               return (
-                <View style={styles.cardProduto}>
+                <TouchableOpacity
+                  style={styles.cardProduto}
+                  onPress={() => setProdutoAtual(p)}
+                >
                   {base64Image && (
                     <Image
                       source={{ uri: `data:image/png;base64,${base64Image}` }}
                       style={styles.imgProduto}
                     />
                   )}
+
                   <Text style={styles.cardText}>
-                    {""}
-                    <FontAwesome5 name="code" size={30} color="#9c9494" />
-                    Code: {p.code}
+                    <FontAwesome5 name="code" size={30} color="#9c9494" /> Code:{" "}
+                    {p.code}
                   </Text>
                   <Text style={styles.cardText}>📦 Produto: {p.product}</Text>
                   <Text style={styles.cardText}>💰 Preço: R$ {p.price}</Text>
@@ -251,7 +279,7 @@ export default function Dashboard() {
                   <Text style={styles.cardText}>🏪 Loja: {p.store}</Text>
                   <Text style={styles.cardText}>👤 Postado por: {p.post}</Text>
                   <Text style={styles.cardText}>📅 Data: {p.dataSystem}</Text>
-                </View>
+                </TouchableOpacity>
               );
             }}
           />
@@ -261,12 +289,15 @@ export default function Dashboard() {
       {/* Usuários */}
       {view === "usuarios" && (
         <FlatList
-          data={usuarios}
+          data={filteredUsuarios}
           keyExtractor={(item) => item.id}
+          numColumns={2} // 👈 quantidade de cards por linha
+          columnWrapperStyle={styles.containerCards} // 👈 controla o alinhamento da linha
+          contentContainerStyle={{ paddingBottom: 20 }}
           renderItem={({ item }) => (
             <View style={styles.cardUsuario}>
               <Text style={styles.cardText}>👤 {item.nome}</Text>
-              <Text style={styles.cardText}>👤 {item.id}</Text>
+              <Text style={styles.cardText}>🆔 {item.id}</Text>
             </View>
           )}
         />
@@ -276,7 +307,10 @@ export default function Dashboard() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
+  container: {
+    flex: 1,
+    padding: 20,
+  },
 
   header: {
     backgroundColor: "#4FC3F7",
@@ -286,7 +320,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  title: { fontSize: 20, fontWeight: "bold", color: "#fff" },
+  title: { fontSize: 20, fontWeight: "bold", color: "#fff", marginBottom: 10 },
   email: { color: "#fff", fontSize: 16 },
 
   menu: {
@@ -341,6 +375,7 @@ const styles = StyleSheet.create({
     borderRadius: 16, // cantos arredondados
     backgroundColor: "#445c68",
     marginBottom: 20,
+    marginTop: 20,
   },
   searchWrapper: {
     width: "100%",
@@ -381,14 +416,16 @@ const styles = StyleSheet.create({
 
   // Lista lateral
   listaLateral: {
+    margin: 5,
     maxWidth: 200,
     marginRight: 10,
     maxHeight: 640,
-    borderRadius: 1,
+    borderRadius: 10,
+    backgroundColor: "#dbe5e9",
   },
   itemLateral: { padding: 8, marginBottom: 3, borderRadius: 5 },
   itemLateralSelecionado: { backgroundColor: "#4FC3F7" },
-  itemLateralText: { color: "#3b3131", fontSize: 18, fontFamily: "Arial" },
+  itemLateralText: { color: "#422d2d", fontSize: 18, fontFamily: "Arial" },
   itemLateralTextSel: { color: "#fff" },
 
   // Card produtos
@@ -398,9 +435,9 @@ const styles = StyleSheet.create({
     flex: 1,
     margin: 8,
     padding: 12,
-    height: 550,
+    height: 555,
     minWidth: 260,
-    maxWidth: 330,
+    maxWidth: 323,
   },
   imgProduto: { width: 300, height: 359, borderRadius: 8, marginBottom: 8 },
 
@@ -409,7 +446,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 12,
     padding: 15,
-    width: 380,
+    width: "48%", // 👈 essencial para grid
     marginVertical: 6,
   },
 
@@ -418,5 +455,12 @@ const styles = StyleSheet.create({
     fontSize: 18, // tamanho da letra
     fontFamily: "Arial", // ou "Roboto", "Courier New", etc
     color: "#333", // cor do texto
+  },
+  containerCards: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    marginBottom: 20,
+    marginEnd: 1080,
   },
 });
